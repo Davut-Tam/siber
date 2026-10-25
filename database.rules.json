@@ -1,0 +1,18 @@
+{
+  "rules": {
+    "skorlar": {
+      ".read": true,
+      ".indexOn": ["puan"],
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid",
+        ".validate": "newData.hasChildren(['ad', 'puan', 'dalga', 'dusurulen', 'tarih']) && (!data.exists() || newData.child('puan').val() >= data.child('puan').val()) && newData.child('puan').val() <= newData.child('dalga').val() * 400000",
+        "ad": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 16" },
+        "puan": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() % 1 === 0" },
+        "dalga": { ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 1000" },
+        "dusurulen": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 100000" },
+        "tarih": { ".validate": "newData.isNumber() && newData.val() <= now + 60000" },
+        "$other": { ".validate": false }
+      }
+    }
+  }
+}

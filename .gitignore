@@ -46,3 +46,8 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# Firebase önbelleği ve kayıtları
+.firebase/
+firebase-debug.log
+database-debug.log

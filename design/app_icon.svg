@@ -1,0 +1,48 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <radialGradient id="bg" cx="50%" cy="42%" r="75%">
+    <stop offset="0" stop-color="#0B2547"/><stop offset=".55" stop-color="#061226"/><stop offset="1" stop-color="#02040A"/>
+  </radialGradient>
+  <radialGradient id="halo" cx="50%" cy="50%" r="50%">
+    <stop offset="0" stop-color="#00E5FF" stop-opacity=".28"/><stop offset="1" stop-color="#00E5FF" stop-opacity="0"/>
+  </radialGradient>
+  <linearGradient id="hull" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#16324F"/><stop offset="1" stop-color="#081526"/>
+  </linearGradient>
+  <linearGradient id="edge" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#E8FDFF"/><stop offset=".45" stop-color="#00E5FF"/><stop offset="1" stop-color="#00A8FF"/>
+  </linearGradient>
+  <linearGradient id="flame" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#FFFFFF"/><stop offset=".25" stop-color="#FF7AC0"/><stop offset=".7" stop-color="#FF3D9A"/><stop offset="1" stop-color="#FF3D9A" stop-opacity="0"/>
+  </linearGradient>
+  <linearGradient id="gridfade" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#00D2FF" stop-opacity="0"/><stop offset="1" stop-color="#00D2FF" stop-opacity=".22"/>
+  </linearGradient>
+  <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+    <feGaussianBlur stdDeviation="14" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <filter id="soft" x="-200%" y="-100%" width="500%" height="300%"><feGaussianBlur stdDeviation="22"/></filter>
+  <clipPath id="lower"><rect x="0" y="640" width="1024" height="384"/></clipPath>
+</defs>
+<rect width="1024" height="1024" fill="url(#bg)"/>
+<!-- perspective grid -->
+<g clip-path="url(#lower)" stroke="url(#gridfade)" stroke-width="3" fill="none">
+  <path d="M512 640 L-400 1024 M512 640 L-60 1024 M512 640 L250 1024 M512 640 L512 1024 M512 640 L774 1024 M512 640 L1084 1024 M512 640 L1424 1024"/>
+  <path d="M0 700 H1024 M0 772 H1024 M0 866 H1024 M0 990 H1024"/>
+</g>
+<!-- stars -->
+<g fill="#E6F7FF">
+  <circle cx="196" cy="214" r="4" opacity=".7"/><circle cx="820" cy="180" r="3" opacity=".6"/>
+  <circle cx="860" cy="430" r="4" opacity=".5"/><circle cx="150" cy="470" r="3" opacity=".45"/>
+  <circle cx="300" cy="120" r="2.5" opacity=".5"/><circle cx="720" cy="300" r="2.5" opacity=".4"/>
+</g>
+<circle cx="512" cy="470" r="330" fill="url(#halo)"/>
+<!-- flame -->
+<path d="M512 612 C548 650 548 720 512 820 C476 720 476 650 512 612Z" fill="#FF3D9A" filter="url(#soft)" opacity=".85"/>
+<path d="M512 618 C536 650 536 700 512 772 C488 700 488 650 512 618Z" fill="url(#flame)"/>
+<!-- ship -->
+<g filter="url(#glow)" stroke-linejoin="round" stroke-linecap="round">
+  <path d="M512 214 L752 704 L512 600 L272 704 Z" fill="url(#hull)" stroke="url(#edge)" stroke-width="26"/>
+</g>
+<path d="M512 352 L540 448 L512 492 L484 448 Z" fill="#E8FDFF" opacity=".95" filter="url(#glow)"/>
+</svg>

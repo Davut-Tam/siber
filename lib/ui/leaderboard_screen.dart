@@ -44,38 +44,8 @@ class LeaderboardScreen extends StatelessWidget {
                         ],
                       ),
                     ),
-                    if (!scores.online)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
-                        child: Text(
-                          s.localBoard,
-                          style: TextStyle(color: th.textMuted, fontWeight: FontWeight.w600),
-                        ),
-                      ),
                     Expanded(
-                      child: FutureBuilder<List<ScoreEntry>>(
-                        future: scores.top(),
-                        builder: (context, snap) {
-                          if (!snap.hasData) {
-                            return Center(child: CircularProgressIndicator(color: th.accent));
-                          }
-                          final list = snap.data!;
-                          if (list.isEmpty) {
-                            return Center(
-                              child: Text(
-                                s.noScores,
-                                style: TextStyle(color: th.textMuted, fontSize: 16, fontWeight: FontWeight.w700),
-                              ),
-                            );
-                          }
-                          return ListView.builder(
-                            padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                            itemCount: list.length,
-                            itemBuilder: (context, i) =>
-                                _Row(rank: i + 1, entry: list[i], self: list[i].name == prefs.nickname),
-                          );
-                        },
-                      ),
+                      child: _Board(prefs: prefs, scores: scores),
                     ),
                   ],
                 ),
@@ -84,6 +54,71 @@ class LeaderboardScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Sıralamayı bir kez yükler; dünya sıralamasına ulaşılamazsa cihazdaki skorları ve bir not gösterir
+class _Board extends StatefulWidget {
+  final Prefs prefs;
+  final ScoreService scores;
+  const _Board({required this.prefs, required this.scores});
+
+  @override
+  State<_Board> createState() => _BoardState();
+}
+
+class _BoardState extends State<_Board> {
+  late final _future = widget.scores.top();
+
+  @override
+  Widget build(BuildContext context) {
+    final s = S.current;
+    return FutureBuilder<List<ScoreEntry>>(
+      future: _future,
+      builder: (context, snap) {
+        if (!snap.hasData) return Center(child: CircularProgressIndicator(color: th.accent));
+        final list = snap.data!;
+        final online = widget.scores.online;
+        final myId = widget.scores.myId;
+        return Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+              child: Row(
+                children: [
+                  Icon(online ? Icons.public_rounded : Icons.cloud_off_rounded, size: 16, color: th.textMuted),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      online ? s.onlineBoard : s.localBoard,
+                      style: TextStyle(color: th.textMuted, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: list.isEmpty
+                  ? Center(
+                      child: Text(
+                        s.noScores,
+                        style: TextStyle(color: th.textMuted, fontSize: 16, fontWeight: FontWeight.w700),
+                      ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                      itemCount: list.length,
+                      itemBuilder: (context, i) {
+                        final e = list[i];
+                        final self = e.id != null ? e.id == myId : e.name == widget.prefs.nickname;
+                        return _Row(rank: i + 1, entry: e, self: self);
+                      },
+                    ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

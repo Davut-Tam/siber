@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'core/prefs.dart';
 import 'core/sound.dart';
 import 'core/themes.dart';
+import 'services/firebase_scores.dart';
 import 'services/scores.dart';
 import 'ui/home_screen.dart';
 
@@ -12,7 +13,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final raw = await SharedPreferences.getInstance();
   final prefs = Prefs(raw);
-  final scores = LocalScoreService(raw);
+  final scores = FirebaseScoreService(LocalScoreService(raw));
   await Sfx.init();
   runApp(SiberApp(prefs: prefs, scores: scores));
 }

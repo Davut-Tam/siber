@@ -3,11 +3,14 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ScoreEntry {
+  /// Çevrim içi kayıtlarda oyuncunun kimliği; kendi satırını vurgulamak için
+  final String? id;
   final String name;
   final int score, wave, kills;
   final DateTime date;
 
   const ScoreEntry({
+    this.id,
     required this.name,
     required this.score,
     required this.wave,
@@ -23,7 +26,8 @@ class ScoreEntry {
     'tarih': date.millisecondsSinceEpoch,
   };
 
-  factory ScoreEntry.fromJson(Map json) => ScoreEntry(
+  factory ScoreEntry.fromJson(Map json, {String? id}) => ScoreEntry(
+    id: id,
     name: json['ad'] as String? ?? '?',
     score: (json['puan'] as num?)?.toInt() ?? 0,
     wave: (json['dalga'] as num?)?.toInt() ?? 0,
@@ -32,10 +36,13 @@ class ScoreEntry {
   );
 }
 
-/// Sıralama kaynağı. Şimdilik cihazda; Firebase sürümü aynı arayüzle eklenecek.
+/// Sıralama kaynağı: Firebase'deki dünya sıralaması ya da (bağlantı yoksa) bu cihazın skorları
 abstract class ScoreService {
-  /// Dünya sıralaması mı, bu cihazın skorları mı
+  /// Son okumada dünya sıralamasına ulaşılabildi mi
   bool get online;
+
+  /// Bu oyuncunun çevrim içi kimliği
+  String? get myId;
 
   /// Skoru kaydeder, sıralamadaki yerini (1'den başlar) döner
   Future<int?> submit(ScoreEntry entry);
@@ -52,6 +59,9 @@ class LocalScoreService implements ScoreService {
 
   @override
   bool get online => false;
+
+  @override
+  String? get myId => null;
 
   List<ScoreEntry> _load() {
     try {
