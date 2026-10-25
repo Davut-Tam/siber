@@ -1,15 +1,17 @@
-import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_soloud/flutter_soloud.dart';
 
-/// Ses efektleri ve titreşim. Sık çalan sesler havuzdan çalınır ki üst üste binebilsin.
+/// Ses efektleri ve titreşim. SoLoud sesleri belleğe alır ve aynı sesi üst üste çalabilir;
+/// iOS'ta AVPlayer kullanmadığından açılışta medya sunucusunu beklemez.
 abstract final class Sfx {
   static bool enabled = true;
   static bool haptics = true;
 
-  static final _pools = <String, AudioPool>{};
+  static final _sources = <String, AudioSource>{};
+  static final _voices = <String, List<SoundHandle>>{};
   static final _last = <String, int>{};
 
-  /// Havuz boyutu: aynı anda kaç kopya çalabilir
+  /// Aynı anda en fazla kaç kopya çalabilir
   static const _sizes = {
     'ates': 4,
     'fuze': 3,
@@ -26,19 +28,16 @@ abstract final class Sfx {
     'bitti': 1,
   };
 
+  /// Açılışı bekletmemek için runApp'ten sonra beklenmeden çağrılır; yüklenmeyen ses sessizce atlanır.
   static Future<void> init() async {
     try {
-      await AudioPlayer.global.setAudioContext(
-        AudioContextConfig(respectSilence: true, focus: AudioContextConfigFocus.mixWithOthers).build(),
-      );
-    } catch (_) {}
-    for (final e in _sizes.entries) {
+      await SoLoud.instance.init();
+    } catch (_) {
+      return;
+    }
+    for (final name in _sizes.keys) {
       try {
-        _pools[e.key] = await AudioPool.createFromAsset(
-          path: 'sounds/${e.key}.wav',
-          maxPlayers: e.value,
-          playerMode: PlayerMode.lowLatency,
-        );
+        _sources[name] = await SoLoud.instance.loadAsset('assets/sounds/$name.wav');
       } catch (_) {}
     }
   }
@@ -46,10 +45,18 @@ abstract final class Sfx {
   /// [gapMs]: aynı sesin en az bu kadar arayla çalması (ateş gibi sık sesler için)
   static void play(String name, {double volume = 1, int gapMs = 0}) {
     if (!enabled) return;
+    final source = _sources[name];
+    if (source == null) return;
     final now = DateTime.now().millisecondsSinceEpoch;
     if (gapMs > 0 && now - (_last[name] ?? 0) < gapMs) return;
     _last[name] = now;
-    _pools[name]?.start(volume: volume).catchError((_) => () async {});
+    try {
+      final soloud = SoLoud.instance;
+      final voices = _voices.putIfAbsent(name, () => [])..removeWhere((h) => !soloud.getIsValidVoiceHandle(h));
+      // Sınır dolduysa en eski kopya susturulur
+      if (voices.length >= _sizes[name]!) soloud.stop(voices.removeAt(0));
+      voices.add(soloud.play(source, volume: volume));
+    } catch (_) {}
   }
 
   static void light() {
