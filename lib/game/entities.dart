@@ -114,6 +114,10 @@ class FloatText {
   final Color color;
   final double size;
 
+  /// Çizimin önbelleği (dizilmiş yazı) ve hangi saydamlık kademesi için dizildiği
+  Object? cache;
+  int cacheAlpha = -1;
+
   FloatText(this.x, this.y, this.text, this.color, {this.size = 14, this.life = 1}) : maxLife = life;
 }
 

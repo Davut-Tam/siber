@@ -49,6 +49,10 @@ class Prefs extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Sıralamada gizlenen oyuncular (çevrim içi kimlik ya da cihazdaki kayıtlar için ad)
+  Set<String> get hidden => (_p.getStringList('gizli') ?? const []).toSet();
+  void hide(String key) => _p.setStringList('gizli', {...hidden, key}.toList());
+
   int get best => _p.getInt('rekor') ?? 0;
   set best(int v) => _p.setInt('rekor', v);
 

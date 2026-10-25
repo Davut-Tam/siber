@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/i18n.dart';
+import '../core/moderation.dart';
 import '../core/prefs.dart';
 import '../core/themes.dart';
 import '../game/engine.dart';
@@ -34,6 +35,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _play() async {
     final name = _name.text.trim();
     if (name.isEmpty) return setState(() => _error = s.enterNick);
+    if (Moderation.isOffensive(name)) return setState(() => _error = s.badNick);
     widget.prefs.nickname = name;
     FocusScope.of(context).unfocus();
     await Navigator.push(
@@ -59,7 +61,7 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (_) => _SettingsSheet(prefs: widget.prefs),
+      builder: (_) => _SettingsSheet(prefs: widget.prefs, scores: widget.scores),
     );
   }
 
@@ -298,7 +300,8 @@ class _HowTo extends StatelessWidget {
 
 class _SettingsSheet extends StatefulWidget {
   final Prefs prefs;
-  const _SettingsSheet({required this.prefs});
+  final ScoreService scores;
+  const _SettingsSheet({required this.prefs, required this.scores});
 
   @override
   State<_SettingsSheet> createState() => _SettingsSheetState();
@@ -306,6 +309,57 @@ class _SettingsSheet extends StatefulWidget {
 
 class _SettingsSheetState extends State<_SettingsSheet> {
   Prefs get p => widget.prefs;
+  bool _deleting = false;
+
+  void _privacy() {
+    final s = S.current;
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: th.light ? Colors.white : th.bg2,
+        title: Text(
+          s.privacy,
+          style: TextStyle(color: th.text, fontWeight: FontWeight.w900),
+        ),
+        content: SingleChildScrollView(
+          child: SelectableText(s.privacyText, style: TextStyle(color: th.text, height: 1.4)),
+        ),
+        actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text(s.close))],
+      ),
+    );
+  }
+
+  Future<void> _deleteData() async {
+    final s = S.current;
+    final messenger = ScaffoldMessenger.of(context);
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: th.light ? Colors.white : th.bg2,
+        title: Text(
+          s.deleteData,
+          style: TextStyle(color: th.text, fontWeight: FontWeight.w900),
+        ),
+        content: Text('${s.deleteDataInfo}\n\n${s.deleteConfirm}', style: TextStyle(color: th.text)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(s.cancel)),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(
+              s.delete,
+              style: TextStyle(color: th.danger, fontWeight: FontWeight.w800),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    setState(() => _deleting = true);
+    final done = await widget.scores.deleteMine();
+    p.best = 0;
+    if (mounted) setState(() => _deleting = false);
+    messenger.showSnackBar(SnackBar(content: Text(done ? s.deleted : s.deleteFailed)));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -381,6 +435,15 @@ class _SettingsSheetState extends State<_SettingsSheet> {
                 const SizedBox(height: 14),
                 _toggle(Icons.volume_up_rounded, s.sound, p.sound, (v) => setState(() => p.sound = v)),
                 _toggle(Icons.vibration_rounded, s.vibration, p.vibration, (v) => setState(() => p.vibration = v)),
+                const SizedBox(height: 14),
+                NeonButton(s.privacy, icon: Icons.privacy_tip_rounded, kind: NeonKind.ghost, onTap: _privacy),
+                const SizedBox(height: 8),
+                NeonButton(
+                  _deleting ? '…' : s.deleteData,
+                  icon: Icons.delete_outline_rounded,
+                  kind: NeonKind.ghost,
+                  onTap: _deleting ? null : _deleteData,
+                ),
               ],
             ),
           ),

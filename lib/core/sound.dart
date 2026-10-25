@@ -1,4 +1,5 @@
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_soloud/flutter_soloud.dart';
 
 /// Ses efektleri ve titreşim. SoLoud sesleri belleğe alır ve aynı sesi üst üste çalabilir;
@@ -28,18 +29,36 @@ abstract final class Sfx {
     'bitti': 1,
   };
 
+  static AppLifecycleListener? _lifecycle;
+
+  /// Her açılış/kapanışta artar; arka plana geçilirken süren bir yükleme yarıda bırakılır
+  static int _generation = 0;
+
   /// Açılışı bekletmemek için runApp'ten sonra beklenmeden çağrılır; yüklenmeyen ses sessizce atlanır.
+  /// Uygulama gizlenince ses motoru kapatılır (arka planda sessizlik çalıp pil harcamasın), görününce açılır.
   static Future<void> init() async {
+    _lifecycle ??= AppLifecycleListener(onHide: _stop, onShow: init);
+    final gen = ++_generation;
     try {
       await SoLoud.instance.init();
     } catch (_) {
       return;
     }
     for (final name in _sizes.keys) {
+      if (gen != _generation) return;
       try {
         _sources[name] = await SoLoud.instance.loadAsset('assets/sounds/$name.wav');
       } catch (_) {}
     }
+  }
+
+  static void _stop() {
+    _generation++;
+    _sources.clear();
+    _voices.clear();
+    try {
+      SoLoud.instance.deinit();
+    } catch (_) {}
   }
 
   /// [gapMs]: aynı sesin en az bu kadar arayla çalması (ateş gibi sık sesler için)

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/i18n.dart';
+import '../core/moderation.dart';
 import '../core/prefs.dart';
 import '../services/scores.dart';
 import 'widgets.dart';
@@ -70,6 +71,66 @@ class _Board extends StatefulWidget {
 
 class _BoardState extends State<_Board> {
   late final _future = widget.scores.top();
+  late var _hidden = widget.prefs.hidden;
+
+  /// Gizleme anahtarı: çevrim içi kayıtta kimlik, cihazdaki kayıtta ad
+  String _key(ScoreEntry e) => e.id ?? e.name;
+
+  void _options(ScoreEntry e) {
+    final s = S.current;
+    final messenger = ScaffoldMessenger.of(context);
+    void hide() {
+      widget.prefs.hide(_key(e));
+      setState(() => _hidden = widget.prefs.hidden);
+    }
+
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Panel(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  Moderation.display(e.name),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: th.text, fontSize: 18, fontWeight: FontWeight.w900),
+                ),
+                const SizedBox(height: 16),
+                if (e.id != null) ...[
+                  NeonButton(
+                    s.report,
+                    icon: Icons.flag_rounded,
+                    kind: NeonKind.outline,
+                    onTap: () {
+                      Navigator.pop(context);
+                      widget.scores.report(e.id!);
+                      hide();
+                      messenger.showSnackBar(SnackBar(content: Text(s.reported)));
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                ],
+                NeonButton(
+                  s.hide,
+                  icon: Icons.visibility_off_rounded,
+                  kind: NeonKind.ghost,
+                  onTap: () {
+                    Navigator.pop(context);
+                    hide();
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -78,7 +139,10 @@ class _BoardState extends State<_Board> {
       future: _future,
       builder: (context, snap) {
         if (!snap.hasData) return Center(child: CircularProgressIndicator(color: th.accent));
-        final list = snap.data!;
+        final list = [
+          for (final e in snap.data!)
+            if (!_hidden.contains(_key(e))) e,
+        ];
         final online = widget.scores.online;
         final myId = widget.scores.myId;
         return Column(
@@ -112,7 +176,10 @@ class _BoardState extends State<_Board> {
                       itemBuilder: (context, i) {
                         final e = list[i];
                         final self = e.id != null ? e.id == myId : e.name == widget.prefs.nickname;
-                        return _Row(rank: i + 1, entry: e, self: self);
+                        return GestureDetector(
+                          onTap: self ? null : () => _options(e),
+                          child: _Row(rank: i + 1, entry: e, self: self),
+                        );
                       },
                     ),
             ),
@@ -176,7 +243,7 @@ class _Row extends StatelessWidget {
                   Text.rich(
                     TextSpan(
                       children: [
-                        TextSpan(text: entry.name),
+                        TextSpan(text: Moderation.display(entry.name)),
                         if (self)
                           TextSpan(
                             text: '  ${S.current.you}',

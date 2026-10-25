@@ -48,6 +48,12 @@ abstract class ScoreService {
   Future<int?> submit(ScoreEntry entry);
 
   Future<List<ScoreEntry>> top({int limit = 100});
+
+  /// Uygunsuz bir takma adı inceleme için bildirir
+  Future<void> report(String id);
+
+  /// Bu oyuncunun dünya sıralamasındaki kaydını ve çevrim içi kimliğini siler
+  Future<bool> deleteMine();
 }
 
 class LocalScoreService implements ScoreService {
@@ -85,4 +91,13 @@ class LocalScoreService implements ScoreService {
 
   @override
   Future<List<ScoreEntry>> top({int limit = 100}) async => _load().take(limit).toList();
+
+  @override
+  Future<void> report(String id) async {}
+
+  @override
+  Future<bool> deleteMine() async {
+    await _prefs.remove(_key);
+    return true;
+  }
 }

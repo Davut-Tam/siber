@@ -32,6 +32,10 @@ class GamePainter extends CustomPainter {
   GameTheme get t => GameTheme.current;
 
   static final _iconCache = <String, TextPainter>{};
+  static final _labelCache = <String, TextPainter>{};
+
+  /// Düşman parıltısı: renk ve yarıçapa göre bir kez kurulur, her karede yeni gradyan yaratılmaz
+  static final _haloCache = <(int, double, bool), Shader>{};
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -317,11 +321,17 @@ class GamePainter extends CustomPainter {
 
     canvas.save();
     canvas.translate(e.x, e.y);
+    if (_haloCache.length > 300) _haloCache.clear();
+    final halo = _haloCache.putIfAbsent((
+      c.toARGB32(),
+      r,
+      t.light,
+    ), () => ui.Gradient.radial(Offset.zero, r * 2, [c.withValues(alpha: 0.28), c.withValues(alpha: 0)]));
     canvas.drawCircle(
       Offset.zero,
       r * 2,
       Paint()
-        ..shader = ui.Gradient.radial(Offset.zero, r * 2, [c.withValues(alpha: 0.28), c.withValues(alpha: 0)])
+        ..shader = halo
         ..blendMode = t.glowBlend,
     );
 
@@ -667,20 +677,33 @@ class GamePainter extends CustomPainter {
     for (final txt in world.texts) {
       final k = txt.life / txt.maxLife;
       final pop = 1 + 0.35 * pow(max(0, k - 0.7) / 0.3, 2);
-      final tp = TextPainter(
-        text: TextSpan(
-          text: txt.text,
-          style: TextStyle(
-            fontFamily: 'Exo2',
-            fontWeight: FontWeight.w900,
-            fontSize: txt.size * pop,
-            color: txt.color.withValues(alpha: min(1, k * 2.5)),
-            shadows: [Shadow(color: Colors.black.withValues(alpha: 0.5 * k), blurRadius: 4)],
+      // Yazı her karede yeniden dizilmesin: saydamlık 12 kademeye yuvarlanır, büyüme ölçekle yapılır
+      final alpha = (min(1.0, k * 2.5) * 12).ceil();
+      var tp = txt.cache as TextPainter?;
+      if (tp == null || txt.cacheAlpha != alpha) {
+        tp?.dispose();
+        tp = TextPainter(
+          text: TextSpan(
+            text: txt.text,
+            style: TextStyle(
+              fontFamily: 'Exo2',
+              fontWeight: FontWeight.w900,
+              fontSize: txt.size,
+              color: txt.color.withValues(alpha: alpha / 12),
+              shadows: [Shadow(color: Colors.black.withValues(alpha: 0.5 * k), blurRadius: 4)],
+            ),
           ),
-        ),
-        textDirection: TextDirection.ltr,
-      )..layout();
-      tp.paint(canvas, Offset(txt.x - tp.width / 2, txt.y - tp.height / 2));
+          textDirection: TextDirection.ltr,
+        )..layout();
+        txt
+          ..cache = tp
+          ..cacheAlpha = alpha;
+      }
+      canvas.save();
+      canvas.translate(txt.x, txt.y);
+      canvas.scale(pop.toDouble());
+      tp.paint(canvas, Offset(-tp.width / 2, -tp.height / 2));
+      canvas.restore();
     }
   }
 
@@ -722,19 +745,23 @@ class GamePainter extends CustomPainter {
           ..color = t.accent.withValues(alpha: 0.4 * k),
       );
     if (!active) {
-      final tp = TextPainter(
-        text: TextSpan(
-          text: label,
-          style: TextStyle(
-            fontFamily: 'Exo2',
-            color: t.accent.withValues(alpha: 0.55),
-            fontSize: 11,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 1.6,
+      final color = t.accent.withValues(alpha: 0.55);
+      final tp = _labelCache.putIfAbsent(
+        '$label-${color.toARGB32()}',
+        () => TextPainter(
+          text: TextSpan(
+            text: label,
+            style: TextStyle(
+              fontFamily: 'Exo2',
+              color: color,
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 1.6,
+            ),
           ),
-        ),
-        textDirection: TextDirection.ltr,
-      )..layout();
+          textDirection: TextDirection.ltr,
+        )..layout(),
+      );
       tp.paint(canvas, center - Offset(tp.width / 2, tp.height / 2));
       return;
     }

@@ -13,6 +13,14 @@
         "tarih": { ".validate": "newData.isNumber() && newData.val() <= now + 60000" },
         "$other": { ".validate": false }
       }
+    },
+    "raporlar": {
+      "$hedef": {
+        "$uid": {
+          ".write": "auth != null && auth.uid === $uid && root.child('skorlar').child($hedef).exists()",
+          ".validate": "newData.isNumber() && newData.val() <= now + 60000"
+        }
+      }
     }
   }
 }

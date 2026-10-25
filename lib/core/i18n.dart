@@ -60,6 +60,19 @@ class S {
   final String Function(int) bestN;
   final String back;
   final String close;
+  final String badNick;
+  final String report;
+  final String hide;
+  final String reported;
+  final String deleteData;
+  final String deleteDataInfo;
+  final String deleteConfirm;
+  final String deleted;
+  final String deleteFailed;
+  final String cancel;
+  final String delete;
+  final String privacy;
+  final String privacyText;
 
   const S({
     required this.code,
@@ -122,6 +135,19 @@ class S {
     required this.bestN,
     required this.back,
     required this.close,
+    required this.badNick,
+    required this.report,
+    required this.hide,
+    required this.reported,
+    required this.deleteData,
+    required this.deleteDataInfo,
+    required this.deleteConfirm,
+    required this.deleted,
+    required this.deleteFailed,
+    required this.cancel,
+    required this.delete,
+    required this.privacy,
+    required this.privacyText,
   });
 
   static S current = tr;
@@ -187,6 +213,19 @@ class S {
     bestN: (n) => 'En iyi: $n',
     back: 'Geri',
     close: 'Kapat',
+    badNick: 'Bu takma ad uygun değil, başka bir ad seç',
+    report: 'Uygunsuz adı şikâyet et',
+    hide: 'Bu oyuncuyu gizle',
+    reported: 'Teşekkürler, bildirimin incelenecek. Oyuncu senin için gizlendi.',
+    deleteData: 'Skorumu sıralamadan sil',
+    deleteDataInfo: 'Dünya sıralamasındaki kaydın, çevrim içi kimliğin ve cihazdaki skor listesi silinir.',
+    deleteConfirm: 'Silinsin mi? Bu işlem geri alınamaz.',
+    deleted: 'Verilerin silindi.',
+    deleteFailed: 'Bağlantı kurulamadı; cihazdaki veriler silindi, çevrim içi kaydı internete bağlanınca tekrar dene.',
+    cancel: 'Vazgeç',
+    delete: 'Sil',
+    privacy: 'Gizlilik',
+    privacyText: privacyTr,
   );
 
   static final en = S(
@@ -250,9 +289,61 @@ class S {
     bestN: (n) => 'Best: $n',
     back: 'Back',
     close: 'Close',
+    badNick: 'This nickname is not allowed, please choose another',
+    report: 'Report inappropriate name',
+    hide: 'Hide this player',
+    reported: 'Thanks, your report will be reviewed. The player is now hidden for you.',
+    deleteData: 'Delete my scores from the leaderboard',
+    deleteDataInfo: 'Removes your world leaderboard entry, your online ID and the score list on this device.',
+    deleteConfirm: 'Delete? This cannot be undone.',
+    deleted: 'Your data has been deleted.',
+    deleteFailed: "Couldn't connect; data on this device was deleted. Try again online to remove your online entry.",
+    cancel: 'Cancel',
+    delete: 'Delete',
+    privacy: 'Privacy',
+    privacyText: privacyEn,
   );
 
   static const all = ['tr', 'en'];
 
   static S byCode(String? code) => code == 'en' ? en : tr;
+
+  /// Sorular ve silme talepleri için iletişim adresi (mağaza sayfalarındakiyle aynı olmalı)
+  static const contactEmail = 'davuttam432@gmail.com';
+
+  static const privacyTr = '''Siber reklam göstermez, seni izlemez ve analiz aracı kullanmaz.
+
+Toplanan veriler
+• Dünya sıralaması için: seçtiğin takma ad, skorun, ulaştığın dalga, düşürdüğün düşman sayısı ve tarih.
+• Bu kayıtları sana bağlamak için rastgele üretilen anonim bir kimlik (Firebase Authentication). Ad, e-posta, telefon, konum ya da reklam kimliği toplanmaz.
+
+Nerede saklanır
+Sıralama kayıtları Google Firebase sunucularında (Avrupa Birliği, Belçika) tutulur ve takma adın ile skorun diğer oyunculara görünür. Ayarların ve rekorun yalnızca bu cihazda saklanır.
+
+Silme
+Ayarlar > "Skorumu sıralamadan sil" ile kaydını ve anonim kimliğini istediğin an silebilirsin. Uygulamayı silmek cihazdaki verileri de siler.
+
+Uygunsuz içerik
+Küfürlü ya da hakaret içeren takma adlar kabul edilmez. Sıralamada bir oyuncuya dokunarak onu şikâyet edebilir ya da gizleyebilirsin; şikâyetler incelenir ve uygunsuz kayıtlar kaldırılır.
+
+İletişim
+$contactEmail''';
+
+  static const privacyEn = '''Siber shows no ads, does not track you and uses no analytics.
+
+What we collect
+• For the world leaderboard: the nickname you choose, your score, the wave you reached, enemies destroyed and the date.
+• A randomly generated anonymous ID (Firebase Authentication) to link these entries to you. No name, email, phone number, location or advertising ID is collected.
+
+Where it is stored
+Leaderboard entries are kept on Google Firebase servers (European Union, Belgium); your nickname and score are visible to other players. Your settings and best score stay on this device only.
+
+Deletion
+Use Settings > "Delete my scores from the leaderboard" to remove your entry and anonymous ID at any time. Uninstalling the app removes the data on this device.
+
+Inappropriate content
+Offensive nicknames are not allowed. Tap a player on the leaderboard to report or hide them; reports are reviewed and offending entries are removed.
+
+Contact
+$contactEmail''';
 }

@@ -24,12 +24,14 @@ class FirebaseScoreService implements ScoreService {
   @override
   String? get myId => _uid;
 
-  Future<DatabaseReference> _scores() async {
+  Future<DatabaseReference> _root() async {
     if (Firebase.apps.isEmpty) await Firebase.initializeApp(options: firebaseOptions);
     final auth = FirebaseAuth.instance;
     _uid = (auth.currentUser ?? (await auth.signInAnonymously()).user!).uid;
-    return FirebaseDatabase.instanceFor(app: Firebase.app(), databaseURL: firebaseOptions.databaseURL).ref('skorlar');
+    return FirebaseDatabase.instanceFor(app: Firebase.app(), databaseURL: firebaseOptions.databaseURL).ref();
   }
+
+  Future<DatabaseReference> _scores() async => (await _root()).child('skorlar');
 
   @override
   Future<int?> submit(ScoreEntry entry) async {
@@ -69,6 +71,32 @@ class FirebaseScoreService implements ScoreService {
     } catch (_) {
       _online = false;
       return _local.top(limit: limit);
+    }
+  }
+
+  @override
+  Future<void> report(String id) async {
+    try {
+      final root = await _root().timeout(_timeout);
+      await root.child('raporlar/$id/$_uid').set(ServerValue.timestamp).timeout(_timeout);
+    } catch (_) {}
+  }
+
+  @override
+  Future<bool> deleteMine() async {
+    await _local.deleteMine();
+    try {
+      if (Firebase.apps.isEmpty) await Firebase.initializeApp(options: firebaseOptions).timeout(_timeout);
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return true;
+      final db = FirebaseDatabase.instanceFor(app: Firebase.app(), databaseURL: firebaseOptions.databaseURL);
+      await db.ref('skorlar/${user.uid}').remove().timeout(_timeout);
+      // Bir sonraki skor yeni bir anonim kimlikle gönderilir
+      await user.delete().timeout(_timeout);
+      _uid = null;
+      return true;
+    } catch (_) {
+      return false;
     }
   }
 }
